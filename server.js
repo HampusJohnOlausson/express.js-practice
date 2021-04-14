@@ -14,7 +14,7 @@ app.use(cookieSession({
     name: 'session',
     secret: 'aVeryS3cr3tK3y',
     secure: false,
-    maxAge: 1000 * 10,
+    maxAge: 1000 * 60,
     httpOnly: true
 }));
 
@@ -39,6 +39,7 @@ app.post("/api/login", async (req, res) => {
     //Check if username or password is correct
     if(!user || !await bcrypt.compare(password, user.password)) {
         res.status(401).json('incorrect passwors or username');
+        return 
     }
 
     //Create session
@@ -48,14 +49,26 @@ app.post("/api/login", async (req, res) => {
     res.status(204).json(null);
 });
 
-app.get("/api/users", (req, res) => {
+app.get("/api/users", secure,  (req, res) => {
     res.json(users);
+    
 });
 
 app.delete("/api/logout", (req, res) => {
-
+    req.session = null;
+    res.status(200).json('Logout session');
 });
 
+
+//helper middleware for secure endpoints
+
+function secure(req, res, next) {
+    if(req.session.username){
+        next();
+    } else {
+        res.status(401).json('you must login first');
+    }
+}
 
 
 
